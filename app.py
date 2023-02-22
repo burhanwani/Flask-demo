@@ -73,32 +73,46 @@ class User(db.Model):
     self.name = name
 
 
-# Product Schema
-class ProductSchema(ma.Schema):
+# User Schema
+class UserSchema(ma.SQLAlchemySchema):
   class Meta:
-    fields = ('id', 'name', 'description', 'price', 'qty')
+    #model = User
+    #include_relationships=True
+    fields = ('id', 'name')
+  #reviews= ma.auto_field()
 
 # Init schema
-product_schema = ProductSchema()
-products_schema = ProductSchema(many=True)
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)
+
 
 # Review Schema
 class ReviewSchema(ma.Schema):
   class Meta:
+    #model = Review
+    #include_relationships=True
+    #include_fk=True
     fields = ('text', 'date_created')
+  user = ma.Nested(UserSchema)
 
 # Init schema
 review_schema = ReviewSchema()
 reviews_schema = ReviewSchema(many=True)
 
-# User Schema
-class UserSchema(ma.Schema):
+# Product Schema
+class ProductSchema(ma.Schema):
   class Meta:
-    fields = ('id', 'name')
+    #include_relationships=True
+    fields = ('id', 'name', 'description', 'price', 'qty', 'reviews')
+  reviews = ma.List(ma.Nested(ReviewSchema))
 
 # Init schema
-user_schema = UserSchema()
-users_schema = UserSchema(many=True)
+product_schema = ProductSchema()
+products_schema = ProductSchema(many=True)
+
+
+
+
 
 # Create a Product
 @app.route('/product', methods=['POST'])
@@ -149,8 +163,8 @@ def get_products():
 @app.route('/product/<id>', methods=['GET'])
 def get_product(id):
   product = Product.query.get(id)
-  #return product_schema.jsonify(product)
-  return jsonify(product.to_json())
+  return product_schema.jsonify(product)
+  #return jsonify(product.to_json())
 
 # Update a Product
 @app.route('/product/<id>', methods=['PUT'])
